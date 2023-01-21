@@ -1,5 +1,6 @@
+use image::ImageFormat;
 use js_sys::{Boolean, Number, Uint8Array};
-use std::{panic};
+use std::panic;
 use wasm_bindgen::prelude::*;
 
 extern crate console_error_panic_hook;
@@ -16,16 +17,26 @@ pub fn resize(
     height: Number,
     exact: Boolean,
     bytes: Uint8Array,
+    extension: Option<String>,
     filter_type: FilterType,
 ) -> Result<Vec<u8>, String> {
     panic::set_hook(Box::new(console_error_panic_hook::hook));
+    let fmt: ImageFormat;
     let mut reader = image::io::Reader::new(std::io::Cursor::new(bytes.to_vec()));
-    match reader.with_guessed_format() {
-        Ok(r) => {
-            reader = r;
+    if let Some(e) = extension {
+        if let Some(f) = ImageFormat::from_extension(&e) {
+            fmt = f;
+            reader.set_format(f);
+        } else {
+            return Err("format for specified extension `{}` not available".to_string());
         }
-        Err(e) => {
-            return Err(e.to_string())
+    } else {
+        match reader.with_guessed_format() {
+            Ok(r) => {
+                reader = r;
+                fmt = r.format();
+            }
+            Err(e) => return Err(e.to_string()),
         }
     }
     match reader.decode() {
