@@ -21,11 +21,11 @@ pub fn resize(
     filter_type: FilterType,
 ) -> Result<Vec<u8>, String> {
     panic::set_hook(Box::new(console_error_panic_hook::hook));
-    let fmt: ImageFormat;
+    // let fmt: ImageFormat;
     let mut reader = image::io::Reader::new(std::io::Cursor::new(bytes.to_vec()));
     if let Some(e) = extension {
         if let Some(f) = ImageFormat::from_extension(&e) {
-            fmt = f;
+            // fmt = f;
             reader.set_format(f);
         } else {
             return Err("format for specified extension `{}` not available".to_string());
@@ -34,7 +34,7 @@ pub fn resize(
         match reader.with_guessed_format() {
             Ok(r) => {
                 reader = r;
-                fmt = r.format();
+                // fmt = r.format();
             }
             Err(e) => return Err(e.to_string()),
         }
@@ -73,7 +73,18 @@ pub enum FilterType {
     Lanczos3,
 }
 
-// #[wasm_bindgen]
+#[wasm_bindgen]
+pub fn get_filter_type(f: &str) -> Result<FilterType, String> {
+    match f {
+        "Nearest" => Ok(FilterType::Nearest),
+        "Triangle" => Ok(FilterType::Triangle),
+        "CatmullRom" => Ok(FilterType::CatmullRom),
+        "Gaussian" => Ok(FilterType::Gaussian),
+        "Lanczos3" => Ok(FilterType::Lanczos3),
+        _ => Err("unavailable filter specified".to_string())
+    }
+}
+
 pub fn match_filter_type(f: FilterType) -> image::imageops::FilterType {
     match f {
         FilterType::Nearest => image::imageops::FilterType::Nearest,
