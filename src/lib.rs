@@ -1,6 +1,6 @@
 use js_sys::{Boolean, Number, Uint8Array};
+use std::{panic};
 use wasm_bindgen::prelude::*;
-use std::{panic, process};
 
 extern crate console_error_panic_hook;
 
@@ -19,7 +19,15 @@ pub fn resize(
     filter_type: FilterType,
 ) -> Result<Vec<u8>, String> {
     panic::set_hook(Box::new(console_error_panic_hook::hook));
-    let reader = image::io::Reader::new(std::io::Cursor::new(bytes.to_vec()));
+    let mut reader = image::io::Reader::new(std::io::Cursor::new(bytes.to_vec()));
+    match reader.with_guessed_format() {
+        Ok(r) => {
+            reader = r;
+        }
+        Err(e) => {
+            return Err(e.to_string())
+        }
+    }
     match reader.decode() {
         Ok(i) => {
             if exact.value_of() {
@@ -41,7 +49,7 @@ pub fn resize(
             let e = e.to_string();
             log!("reader.decode() error: {}", e);
             Err(e)
-        },
+        }
     }
 }
 
